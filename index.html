@@ -168,13 +168,51 @@
       font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: .2s;
     }
     .toast.show { opacity: 1; }
+    .grid-calc > *, .kpi, .field { min-width: 0; }
+    .model-filters { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 120px); gap: 6px; margin-bottom: 10px; }
+    .model-filters > *, .line-row > select, .line-row > input { min-width: 0; width: 100%; }
+    .model-item > :first-child { min-width: 0; overflow-wrap: anywhere; }
+    .model-price { flex-shrink: 0; }
     @media (max-width: 860px) {
-      .grid-calc { grid-template-columns: 1fr; }
-      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      html { scroll-padding-top: 76px; scroll-padding-bottom: 84px; }
+      body { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+      header { padding: 8px 12px; gap: 8px; }
+      main { padding: 12px; }
+      .grid-calc { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+      .card { padding: 12px; }
+      .card-title { flex-wrap: wrap; }
+      .btn, input:not([type="checkbox"]):not([type="range"]), select { min-height: 44px; }
+      input, select { max-width: 100%; font-size: 16px; }
+      .fx-pill { padding: 2px 6px; }
+      .fx-pill input { width: 54px; }
+      .model-list { max-height: min(28vh, 210px); }
+      .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .kpi { overflow-wrap: anywhere; }
+      .kpi.highlight { grid-column: 1 / -1; }
+      .kpi.highlight .kpi-val { font-size: 26px; }
+      .form-row { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+      .line-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px; gap: 6px; padding: 10px 0; }
+      .line-row > select { grid-column: 1 / -1; }
+      .sum-cell { white-space: normal; overflow-wrap: anywhere; }
       .desktop-nav { display: none; }
-      .bottom-nav { display: grid; }
-      .model-list { max-height: 220px; }
-      .line-row { grid-template-columns: 1fr 86px 78px 32px; gap: 6px; }
+      .bottom-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .bottom-nav button { min-height: 48px; }
+      .table-wrap table, .table-wrap tbody { display: block; }
+      .table-wrap thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+      .table-wrap tbody tr {
+        display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 44px;
+        align-items: end; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border);
+      }
+      .table-wrap td { min-width: 0; padding: 0; border: 0; overflow-wrap: anywhere; }
+      .table-wrap td:first-child { grid-column: 1 / -1; }
+      .table-wrap td > input, .table-wrap td > select { width: 100% !important; }
+      .table-wrap td[data-label]::before {
+        content: attr(data-label); display: block; color: var(--muted); font-size: 11px; font-weight: 600;
+      }
+      .summary-table tbody tr { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .summary-table .num { text-align: left; }
+      .summary-table td:last-child { font-weight: 800; color: var(--primary); }
+      .toast { max-width: calc(100% - 32px); }
     }
   </style>
 </head>
@@ -337,6 +375,7 @@ function switchTab(tab) {
   currentTab = tab;
   document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   render();
+  window.scrollTo(0, 0);
 }
 
 function render() {
@@ -348,21 +387,14 @@ function render() {
   else if (currentTab === 'summary') app.innerHTML = renderSummaryTab();
 }
 
-function renderCalcTab() {
-  const cats = ['Все', ...new Set(state.models.map(m => m.category || 'Без категории'))];
+function renderModelList() {
   const filtered = state.models.filter(m => {
     const okCat = catFilter === 'Все' || m.category === catFilter;
     const okQ = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());
     return okCat && okQ;
   });
 
-  if (!selectedModelId || !state.models.some(m => m.id === selectedModelId)) {
-    selectedModelId = state.models[0]?.id || null;
-  }
-  const m = state.models.find(x => x.id === selectedModelId);
-  const c = m ? calcModel(m) : null;
-
-  const listHtml = filtered.map(item => {
+  return  filtered.map(item => {
     const ic = calcModel(item);
     return `
       <div class="model-item ${item.id === selectedModelId ? 'active' : ''}" onclick="selectModel('${item.id}')">
@@ -373,6 +405,22 @@ function renderCalcTab() {
         <div class="model-price">${fmt(ic.total)} ₽</div>
       </div>`;
   }).join('') || '<div style="color:var(--muted);font-size:13px;padding:12px;">Ничего не найдено</div>';
+}
+
+function filterModels(query) {
+  searchQuery = query;
+  const list = document.querySelector('.model-list');
+  list.innerHTML = renderModelList();
+  list.scrollTop = 0;
+}
+
+function renderCalcTab() {
+  const cats = ['Все', ...new Set(state.models.map(m => m.category || 'Без категории'))];
+  if (!selectedModelId || !state.models.some(m => m.id === selectedModelId)) {
+    selectedModelId = state.models[0]?.id || null;
+  }
+  const m = state.models.find(x => x.id === selectedModelId);
+  const c = m ? calcModel(m) : null;
 
   let editorHtml = '<div class="card">Выберите или создайте модель</div>';
   if (m && c) {
@@ -571,15 +619,15 @@ function renderCalcTab() {
           <span>Модели (${state.models.length})</span>
           <button class="btn btn-primary btn-sm" onclick="createNewModel()">+ Новая</button>
         </div>
-        <div style="display:flex;gap:6px;margin-bottom:10px;">
-          <input placeholder="Поиск модели..." value="${esc(searchQuery)}" oninput="searchQuery=this.value;render()" style="flex:1;" />
-          <select onchange="catFilter=this.value;render()" style="max-width:120px;">
+        <div class="model-filters">
+          <input type="search" aria-label="Поиск модели" placeholder="Поиск модели…" value="${esc(searchQuery)}" oninput="filterModels(this.value)" />
+          <select aria-label="Категория моделей" onchange="catFilter=this.value;filterModels(searchQuery)">
             ${cats.map(ct => `<option ${ct===catFilter?'selected':''}>${esc(ct)}</option>`).join('')}
           </select>
         </div>
-        <div class="model-list">${listHtml}</div>
+        <div class="model-list">${renderModelList()}</div>
       </div>
-      <div>${editorHtml}</div>
+      <div id="modelEditor">${editorHtml}</div>
     </div>`;
 }
 
@@ -587,8 +635,8 @@ function renderRefsTab() {
   const yRows = state.yarns.map((y, i) => `
     <tr>
       <td><input value="${esc(y.name)}" onchange="state.yarns[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
-      <td><input type="number" step="0.1" value="${y.price}" onchange="state.yarns[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
-      <td>
+      <td data-label="Цена"><input type="number" step="0.1" value="${y.price}" onchange="state.yarns[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td data-label="Валюта">
         <select onchange="state.yarns[${i}].currency=this.value;saveState();render()">
           <option value="USD" ${y.currency==='USD'?'selected':''}>$/кг</option>
           <option value="RUB" ${y.currency==='RUB'?'selected':''}>₽/кг</option>
@@ -600,8 +648,8 @@ function renderRefsTab() {
   const wRows = state.works.map((w, i) => `
     <tr>
       <td><input value="${esc(w.name)}" onchange="state.works[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
-      <td><input type="number" step="0.1" value="${w.rate}" onchange="state.works[${i}].rate=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
-      <td>
+      <td data-label="Ставка"><input type="number" step="0.1" value="${w.rate}" onchange="state.works[${i}].rate=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td data-label="Тип">
         <select onchange="state.works[${i}].type=this.value;saveState();render()">
           <option value="fixed" ${w.type==='fixed'?'selected':''}>₽/шт</option>
           <option value="per_min" ${w.type==='per_min'?'selected':''}>₽/мин</option>
@@ -613,8 +661,8 @@ function renderRefsTab() {
   const mRows = state.materials.map((x, i) => `
     <tr>
       <td><input value="${esc(x.name)}" onchange="state.materials[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
-      <td><input type="number" step="0.05" value="${x.price}" onchange="state.materials[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
-      <td><input value="${esc(x.unit)}" onchange="state.materials[${i}].unit=this.value;saveState();render()" style="width:70px;" /></td>
+      <td data-label="Цена, ₽"><input type="number" step="0.05" value="${x.price}" onchange="state.materials[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td data-label="Единица"><input value="${esc(x.unit)}" onchange="state.materials[${i}].unit=this.value;saveState();render()" style="width:70px;" /></td>
       <td><button class="btn btn-danger btn-sm" onclick="deleteRef('materials', ${i})">✕</button></td>
     </tr>`).join('');
 
@@ -647,8 +695,8 @@ function renderIndirectTab() {
   const makeRows = (arr, key) => arr.map((item, i) => `
     <tr>
       <td><input value="${esc(item.name)}" onchange="state.${key}[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
-      <td><input type="number" step="1000" value="${item.annual}" onchange="state.${key}[${i}].annual=parseFloat(this.value)||0;saveState();render()" style="width:130px;" /></td>
-      <td class="num">${fmt(item.annual / Math.max(1, state.annualVolume))} ₽</td>
+      <td data-label="Сумма в год, ₽"><input type="number" step="1000" value="${item.annual}" onchange="state.${key}[${i}].annual=parseFloat(this.value)||0;saveState();render()" style="width:130px;" /></td>
+      <td class="num" data-label="На 1 шт">${fmt(item.annual / Math.max(1, state.annualVolume))} ₽</td>
       <td><button class="btn btn-danger btn-sm" onclick="state.${key}.splice(${i},1);saveState();render()">✕</button></td>
     </tr>`).join('');
 
@@ -707,13 +755,13 @@ function renderSummaryTab() {
     return `
       <tr style="cursor:pointer;" onclick="selectedModelId='${m.id}';switchTab('calc')">
         <td><b>${esc(m.name)}</b><div style="font-size:11.5px;color:var(--muted);">${esc(m.category)}</div></td>
-        <td class="num">${(c.totalWeight*1000).toFixed(0)} г</td>
-        <td class="num">${fmt(c.yarnCost + c.defectCost)} ₽</td>
-        <td class="num">${fmt(c.worksCost)} ₽</td>
-        <td class="num">${fmt(c.matsCost)} ₽</td>
-        <td class="num">${fmt(c.direct)} ₽</td>
-        <td class="num">${fmt(c.indirectFixed + c.indirectVar)} ₽</td>
-        <td class="num"><b>${fmt(c.total)} ₽</b></td>
+        <td class="num" data-label="Вес">${(c.totalWeight*1000).toFixed(0)} г</td>
+        <td class="num" data-label="Пряжа и брак">${fmt(c.yarnCost + c.defectCost)} ₽</td>
+        <td class="num" data-label="Работы">${fmt(c.worksCost)} ₽</td>
+        <td class="num" data-label="Материалы">${fmt(c.matsCost)} ₽</td>
+        <td class="num" data-label="Прямые">${fmt(c.direct)} ₽</td>
+        <td class="num" data-label="Косвенные">${fmt(c.indirectFixed + c.indirectVar)} ₽</td>
+        <td class="num" data-label="Итого"><b>${fmt(c.total)} ₽</b></td>
       </tr>`;
   }).join('');
 
@@ -730,7 +778,7 @@ function renderSummaryTab() {
           </label>
         </div>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap summary-table">
         <table>
           <thead>
             <tr>
@@ -755,7 +803,13 @@ function renderSummaryTab() {
 }
 
 // Model actions
-function selectModel(id) { selectedModelId = id; render(); }
+function selectModel(id) {
+  selectedModelId = id;
+  render();
+  if (window.matchMedia('(max-width: 860px)').matches) {
+    document.getElementById('modelEditor').scrollIntoView({ block: 'start' });
+  }
+}
 function currentModel() { return state.models.find(m => m.id === selectedModelId); }
 function updateModelField(field, val) {
   const m = currentModel(); if (!m) return;
