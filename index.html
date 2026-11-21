@@ -272,6 +272,198 @@ let searchQuery = '';
 let catFilter = 'Все';
 let deferredPrompt = null;
 
+const DISK_CLIENT_ID = '21a0739443ce4f7a838d14ebb8424a00';
+const DISK_REDIRECT = 'https://abuyusufuzdenov-png.github.io/knitting-cost/index.html';
+const DISK_API = 'https://cloud-api.yandex.net/v1/disk/resources';
+const DISK_SCOPE = 'cloud_api:disk.app_folder';
+const DISK_TOKEN = 'knitting_disk_session';
+const DISK_NONCE = 'knitting_disk_nonce';
+const DISK_BASE = 'knitting_disk_base';
+const DISK_BACKUP = 'knitting_disk_backup';
+let diskBusy = false;
+let diskTimer;
+let diskStatus = '';
+
+function connectDisk() {
+  const nonce = crypto.randomUUID();
+  sessionStorage.setItem(DISK_NONCE, nonce);
+  const query = new URLSearchParams({
+    response_type: 'token', client_id: DISK_CLIENT_ID,
+    redirect_uri: DISK_REDIRECT, state: nonce, scope: DISK_SCOPE
+  });
+  location.assign('https://oauth.yandex.ru/authorize?' + query);
+}
+
+function receiveDiskLogin() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  if (!params.has('access_token') && !params.has('error')) return;
+  history.replaceState(null, '', location.pathname + location.search);
+  const expected = sessionStorage.getItem(DISK_NONCE);
+  sessionStorage.removeItem(DISK_NONCE);
+  if (!expected || expected !== params.get('state') || !params.get('access_token')) {
+    diskStatus = 'Вход не подтверждён. Подключите Яндекс Диск ещё раз.';
+    return;
+  }
+  sessionStorage.setItem(DISK_TOKEN, params.get('access_token'));
+  diskStatus = 'Диск подключён. Нажмите «Синхронизировать», чтобы выбрать основную базу.';
+  currentTab = 'summary';
+  document.querySelectorAll('[data-tab]').forEach(button =>
+    button.classList.toggle('active', button.dataset.tab === 'summary'));
+}
+
+function diskControls() {
+  const connected = Boolean(sessionStorage.getItem(DISK_TOKEN));
+  return `
+    <section class="card">
+      <div class="card-title">Синхронизация с Яндекс Диском</div>
+      <p id="diskStatus" role="status">${esc(diskStatus || (connected ? 'Яндекс Диск подключён.' : 'Подключите один и тот же Яндекс ID на ПК и телефоне.'))}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${connected ? '<button class="btn btn-primary" id="diskSync" onclick="syncDisk(true)">Синхронизировать</button><button class="btn" onclick="disconnectDisk()">Отключить</button>' : '<button class="btn btn-primary" onclick="connectDisk()">Подключить Яндекс Диск</button>'}
+        ${localStorage.getItem(DISK_BACKUP) ? '<button class="btn" onclick="downloadDiskBackup()">Скачать копию до синхронизации</button>' : ''}
+      </div>
+    </section>`;
+}
+
+function disconnectDisk() {
+  sessionStorage.removeItem(DISK_TOKEN);
+  clearTimeout(diskTimer);
+  diskStatus = 'Яндекс Диск отключён.';
+  render();
+}
+
+function downloadDiskBackup() {
+  const backup = localStorage.getItem(DISK_BACKUP);
+  if (backup) downloadBlob(backup, 'knitting_cost_before_sync.json', 'application/json');
+}
+
+function setDiskStatus(message) {
+  diskStatus = message;
+  const label = document.getElementById('diskStatus');
+  if (label) label.textContent = message;
+}
+
+async function diskRequest(token, endpoint, params) {
+  const response = await fetch(DISK_API + endpoint + '?' + new URLSearchParams(params), {
+    headers: { Authorization: 'OAuth ' + token },
+    cache: 'no-store'
+  });
+  if (response.status === 401) throw new Error('Срок входа истёк. Отключите Диск и подключите его снова.');
+  if (!response.ok) throw new Error('Яндекс Диск вернул ошибку ' + response.status + '.');
+  return response.json();
+}
+
+async function latestDiskRevision(token) {
+  let latest = 0;
+  const limit = 100;
+  for (let offset = 0; ; offset += limit) {
+    const folder = await diskRequest(token, '', { path: 'app:/', limit, offset });
+    const items = folder._embedded.items;
+    for (const item of items) {
+      const match = /^knitting-cost-(\d{10})\.json$/.exec(item.name);
+      if (match) latest = Math.max(latest, Number(match[1]));
+    }
+    if (items.length < limit) return latest;
+  }
+}
+
+function diskPath(revision) {
+  return 'app:/knitting-cost-' + String(revision).padStart(10, '0') + '.json';
+}
+
+function diskSnapshot(base) {
+  const { pinCode, ...data } = base;
+  return JSON.stringify(data);
+}
+
+async function readDiskRevision(token, revision) {
+  const { href } = await diskRequest(token, '/download', { path: diskPath(revision) });
+  const response = await fetch(href, { cache: 'no-store' });
+  if (!response.ok) throw new Error('Не удалось прочитать базу на Диске.');
+  const data = await response.json();
+  if (!['models', 'yarns', 'works', 'materials', 'indirectFixed', 'indirectVar'].every(key => Array.isArray(data[key]))) {
+    throw new Error('Файл на Диске имеет неверный формат.');
+  }
+  return diskSnapshot(data);
+}
+
+async function writeDiskRevision(token, revision, snapshot) {
+  const { href } = await diskRequest(token, '/upload', { path: diskPath(revision), overwrite: 'false' });
+  const response = await fetch(href, { method: 'PUT', body: snapshot });
+  if (!response.ok) throw new Error('Не удалось сохранить версию. Проверьте связь и повторите синхронизацию.');
+}
+
+function scheduleDiskSync() {
+  clearTimeout(diskTimer);
+  if (sessionStorage.getItem(DISK_TOKEN) && localStorage.getItem(DISK_BASE)) {
+    diskTimer = setTimeout(() => syncDisk(false), 1500);
+  }
+}
+
+async function syncDisk(manual) {
+  const token = sessionStorage.getItem(DISK_TOKEN);
+  if (!token || diskBusy || document.getElementById('pinOverlay').classList.contains('open')) return;
+  diskBusy = true;
+  const button = document.getElementById('diskSync');
+  if (button) button.disabled = true;
+  let pendingChanges = false;
+  try {
+    setDiskStatus('Проверяю версии базы…');
+    const local = diskSnapshot(state);
+    const base = JSON.parse(localStorage.getItem(DISK_BASE) || 'null');
+    const revision = await latestDiskRevision(token);
+    const cloud = revision ? await readDiskRevision(token, revision) : null;
+    if (sessionStorage.getItem(DISK_TOKEN) !== token) return;
+    if (diskSnapshot(state) !== local) {
+      pendingChanges = true;
+      setDiskStatus('База изменилась во время проверки. Повторяю синхронизацию.');
+      return;
+    }
+    let selected = local;
+    if (local !== cloud && (!base || !cloud || (base.snapshot !== local && base.snapshot !== cloud))) {
+      if (!manual) {
+        setDiskStatus('Нужно выбрать версию базы. Откройте «Сводка» → «Синхронизировать».');
+        showToast('Синхронизация ждёт выбора версии');
+        return;
+      }
+      const choice = cloud ? prompt('Копии различаются. Введите 1 — сохранить базу этого устройства на Диск, или 2 — загрузить базу с Диска. Отмена оставит обе копии как есть.') :
+        (confirm('На Яндекс Диске пока нет базы. Сохранить туда данные с этого устройства?') ? '1' : null);
+      if (choice !== '1' && !(choice === '2' && cloud)) {
+        setDiskStatus('Синхронизация отменена.');
+        return;
+      }
+      localStorage.setItem(DISK_BACKUP, JSON.stringify(state));
+      if (choice === '2') selected = cloud;
+    } else if (base?.snapshot === local && cloud) {
+      selected = cloud;
+    }
+
+    if (selected !== cloud) await writeDiskRevision(token, revision + 1, selected);
+    if (sessionStorage.getItem(DISK_TOKEN) !== token) return;
+    pendingChanges = diskSnapshot(state) !== local;
+    if (selected !== local && !pendingChanges) {
+      localStorage.setItem(DISK_BACKUP, JSON.stringify(state));
+      const nextState = { ...JSON.parse(selected), pinCode: state.pinCode };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
+      state = nextState;
+    }
+    localStorage.setItem(DISK_BASE, JSON.stringify({ snapshot: selected }));
+    setDiskStatus('Синхронизировано · ' + new Date().toLocaleTimeString('ru-RU'));
+    if (selected !== local && !pendingChanges) render();
+    else if (manual && currentTab === 'summary') render();
+  } catch (error) {
+    setDiskStatus(error instanceof TypeError ? 'Яндекс Диск недоступен. Локальная база сохранена.' : error.message);
+    if (manual) showToast(diskStatus);
+  } finally {
+    diskBusy = false;
+    if (button) button.disabled = false;
+    if (pendingChanges) scheduleDiskSync();
+  }
+}
+
+function refreshDisk() {
+  if (localStorage.getItem(DISK_BASE)) syncDisk(false);
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -286,6 +478,7 @@ function loadState() {
 function saveState(msg) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (msg) showToast(msg);
+  scheduleDiskSync();
 }
 
 function showToast(msg) {
@@ -766,6 +959,7 @@ function renderSummaryTab() {
   }).join('');
 
   return `
+    ${diskControls()}
     <div class="card">
       <div class="card-title">
         <span>📊 Сводная таблица себестоимости (${state.models.length} моделей)</span>
@@ -970,6 +1164,7 @@ function checkPin() {
   if (val === state.pinCode) {
     document.getElementById('pinOverlay').classList.remove('open');
     sessionStorage.setItem('pin_ok', '1');
+    refreshDisk();
   } else {
     document.getElementById('pinErr').textContent = 'Неверный PIN-код';
   }
@@ -1005,10 +1200,16 @@ function installPWA() {
 }
 
 // Init
+receiveDiskLogin();
+window.addEventListener('online', refreshDisk);
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refreshDisk();
+});
 if (state.pinCode && !sessionStorage.getItem('pin_ok')) {
   document.getElementById('pinOverlay').classList.add('open');
 }
 render();
+refreshDisk();
 </script>
 </body>
 </html>
