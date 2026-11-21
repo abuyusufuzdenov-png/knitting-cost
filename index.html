@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Себестоимость" />
+  <title>Конструктор себестоимости — Вязальный цех 2025</title>
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --success: #059669;
+      --success-soft: #ecfdf5;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --radius: 14px;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+      padding-bottom: 84px;
+    }
+    header {
+      position: sticky; top: 0; z-index: 30;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    .brand img { width: 32px; height: 32px; border-radius: 8px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .fx-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--primary-soft); color: var(--primary);
+      padding: 6px 10px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    }
+    .fx-pill input {
+      width: 58px; border: 1px solid #bfdbfe; border-radius: 6px;
+      padding: 3px 6px; font-weight: 700; color: var(--text); text-align: center;
+    }
+    .desktop-nav {
+      display: flex; gap: 6px; padding: 10px 16px 0; max-width: 1280px; margin: 0 auto;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      border: 1px solid var(--border); background: var(--card); color: var(--muted);
+      padding: 9px 14px; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; white-space: nowrap; transition: .15s;
+    }
+    .tab-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    main { max-width: 1280px; margin: 0 auto; padding: 14px 16px; }
+    .grid-calc { display: grid; grid-template-columns: 310px 1fr; gap: 16px; align-items: start; }
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow);
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 15px; font-weight: 700; margin: 0 0 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: 1px solid var(--border); background: #fff; color: var(--text);
+      padding: 8px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: .15s;
+    }
+    .btn:hover { background: #f1f5f9; }
+    .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-soft { background: var(--primary-soft); color: var(--primary); border-color: #dbeafe; }
+    .btn-danger { color: var(--danger); border-color: #fecaca; background: #fef2f2; }
+    .btn-sm { padding: 5px 9px; font-size: 12px; border-radius: 8px; }
+    input, select {
+      font: inherit; font-size: 14px; padding: 8px 10px;
+      border: 1px solid var(--border); border-radius: 9px; background: #fff; color: var(--text);
+    }
+    input:focus, select:focus { outline: 2px solid #93c5fd; border-color: var(--primary); }
+    .model-list { max-height: 68vh; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .model-item {
+      padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px;
+      cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+      background: #fff; transition: .12s;
+    }
+    .model-item:hover { border-color: #93c5fd; }
+    .model-item.active { background: var(--primary-soft); border-color: var(--primary); }
+    .model-name { font-weight: 600; font-size: 13.5px; }
+    .model-cat { font-size: 11.5px; color: var(--muted); }
+    .model-price { font-weight: 700; font-size: 14px; color: var(--primary); white-space: nowrap; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+    .kpi {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px; box-shadow: var(--shadow);
+    }
+    .kpi.highlight { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; border: none; }
+    .kpi-label { font-size: 11.5px; opacity: .8; margin-bottom: 4px; }
+    .kpi-val { font-size: 20px; font-weight: 800; }
+    .kpi-sub { font-size: 11.5px; opacity: .85; margin-top: 2px; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .field input, .field select { width: 100%; }
+    .line-row {
+      display: grid; grid-template-columns: 1fr 110px 95px 34px; gap: 8px;
+      align-items: center; padding: 7px 0; border-bottom: 1px dashed var(--border);
+    }
+    .line-row:last-child { border-bottom: none; }
+    .sum-cell { font-weight: 700; text-align: right; font-size: 13.5px; white-space: nowrap; }
+    .quick-add {
+      margin-top: 10px; padding: 10px; background: #f8fafc; border: 1px dashed #cbd5e1;
+      border-radius: 10px; display: none; gap: 8px; flex-wrap: wrap; align-items: center;
+    }
+    .quick-add.open { display: flex; }
+    .bar-wrap { height: 14px; border-radius: 99px; overflow: hidden; display: flex; background: #e2e8f0; margin: 10px 0 8px; }
+    .bar-seg { height: 100%; transition: width .25s; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); }
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    th, td { padding: 9px 10px; border-bottom: 1px solid var(--border); text-align: left; }
+    th { font-size: 12px; color: var(--muted); font-weight: 700; background: #f8fafc; }
+    .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .table-wrap { overflow-x: auto; }
+    .bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+      background: rgba(255,255,255,0.96); backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+      grid-template-columns: repeat(4, 1fr); gap: 4px;
+    }
+    .bottom-nav button {
+      border: none; background: transparent; color: var(--muted);
+      font-size: 11px; font-weight: 600; padding: 6px 4px; border-radius: 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;
+    }
+    .bottom-nav button.active { color: var(--primary); background: var(--primary-soft); }
+    .bottom-nav .ico { font-size: 18px; line-height: 1; }
+    .pin-overlay {
+      position: fixed; inset: 0; z-index: 100; background: #0f172a;
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .pin-overlay.open { display: flex; }
+    .pin-box {
+      background: #fff; padding: 26px; border-radius: 18px; width: 100%; max-width: 340px;
+      text-align: center;
+    }
+    .toast {
+      position: fixed; top: 70px; right: 16px; z-index: 90;
+      background: #0f172a; color: #fff; padding: 10px 14px; border-radius: 10px;
+      font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: .2s;
+    }
+    .toast.show { opacity: 1; }
+    @media (max-width: 860px) {
+      .grid-calc { grid-template-columns: 1fr; }
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .desktop-nav { display: none; }
+      .bottom-nav { display: grid; }
+      .model-list { max-height: 220px; }
+      .line-row { grid-template-columns: 1fr 86px 78px 32px; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="pinOverlay" class="pin-overlay">
+  <div class="pin-box">
+    <h2 style="margin:0 0 8px;">🔒 Вход в цех</h2>
+    <p style="margin:0 0 16px;color:var(--muted);font-size:13px;">Введите PIN-код для доступа к расчётам себестоимости</p>
+    <input id="pinInput" type="password" inputmode="numeric" placeholder="PIN-код" style="width:100%;text-align:center;font-size:20px;letter-spacing:6px;margin-bottom:12px;" />
+    <button class="btn btn-primary" style="width:100%;padding:11px;" onclick="checkPin()">Открыть</button>
+    <div id="pinErr" style="color:var(--danger);font-size:12px;margin-top:8px;"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<header>
+  <div class="brand">
+    <img src="./icon.svg" alt="icon" />
+    <span>Вязальный цех · 2025</span>
+  </div>
+  <div class="header-actions">
+    <div class="fx-pill" title="Общий курс доллара для всех моделей">
+      <span>$ =</span>
+      <input id="globalFxInput" type="number" step="0.5" onchange="applyGlobalFx(this.value)" />
+      <span>₽</span>
+    </div>
+    <button id="installBtn" class="btn btn-soft btn-sm" style="display:none;" onclick="installPWA()">📲 Установить</button>
+  </div>
+</header>
+
+<nav class="desktop-nav">
+  <button class="tab-btn active" data-tab="calc" onclick="switchTab('calc')">🧮 Конструктор</button>
+  <button class="tab-btn" data-tab="refs" onclick="switchTab('refs')">📚 Справочники</button>
+  <button class="tab-btn" data-tab="indirect" onclick="switchTab('indirect')">🏭 Косвенные и объём</button>
+  <button class="tab-btn" data-tab="summary" onclick="switchTab('summary')">📊 Сводка и экспорт</button>
+</nav>
+
+<main id="app"></main>
+
+<nav class="bottom-nav">
+  <button class="active" data-tab="calc" onclick="switchTab('calc')"><span class="ico">🧮</span><span>Модели</span></button>
+  <button data-tab="refs" onclick="switchTab('refs')"><span class="ico">📚</span><span>База</span></button>
+  <button data-tab="indirect" onclick="switchTab('indirect')"><span class="ico">🏭</span><span>Цех</span></button>
+  <button data-tab="summary" onclick="switchTab('summary')"><span class="ico">📊</span><span>Сводка</span></button>
+</nav>
+
+<script>
+const STORAGE_KEY = 'knitting_cost_pwa_state_v2';
+const DEFAULT_STATE = {"version": 2, "globalFx": 82.0, "annualVolume": 72022, "pinCode": "", "indirectFixed": [{"id": "if1", "name": "Зарплата вязальщика", "annual": 1440000.0}, {"id": "if2", "name": "Зарплата программиста", "annual": 623184.0}, {"id": "if3", "name": "Зарплата технолога", "annual": 667447.0}, {"id": "if4", "name": "Аренда помещения", "annual": 540000.0}, {"id": "if5", "name": "Аренда квартиры", "annual": 156000.0}], "indirectVar": [{"id": "iv1", "name": "Логистика", "annual": 649476.0}, {"id": "iv2", "name": "Продукты и быт-хоз товары", "annual": 275045.0}, {"id": "iv3", "name": "Электроэнергия и газ", "annual": 242900.0}], "yarns": [{"id": "y_std_usd", "name": "Основная пряжа (импорт, $)", "currency": "USD", "price": 8.8, "note": "Стандарт для шапок"}, {"id": "y_750", "name": "Пряжа 750 ₽/кг", "currency": "RUB", "price": 750.0, "note": "Монро /16, Балаклавы"}, {"id": "y_980", "name": "Пряжа 980 ₽/кг (келебек)", "currency": "RUB", "price": 980.0, "note": "Эмиль"}, {"id": "y_950", "name": "Пряжа 950 ₽/кг (свитер)", "currency": "RUB", "price": 950.0, "note": "Мила"}, {"id": "y_570", "name": "Пряжа 570 ₽/кг (кофта)", "currency": "RUB", "price": 570.0, "note": "Кофта для Ивана"}, {"id": "y_1275", "name": "Пряжа 1275 ₽/кг (премиум)", "currency": "RUB", "price": 1275.0, "note": "Каролина"}], "works": [{"id": "w_murat", "name": "З/П вязание (Мурат/Марат)", "type": "per_min", "rate": 1.0}, {"id": "w_knitter3", "name": "З/П вязальщика (кофты, по мин)", "type": "per_min", "rate": 3.0}, {"id": "w_knitter_fix", "name": "З/П вязальщика (фикс)", "type": "fixed", "rate": 20.0}, {"id": "w_brigadier", "name": "Фикс. з/п бригадира", "type": "fixed", "rate": 1.0}, {"id": "w_top", "name": "Сборка верха (стандарт)", "type": "fixed", "rate": 7.0}, {"id": "w_sew_turn", "name": "Шитьё с отворотом", "type": "fixed", "rate": 9.0}, {"id": "w_sew_noturn", "name": "Шитьё без отворота", "type": "fixed", "rate": 7.0}, {"id": "w_sew_snood", "name": "Шитьё хомута", "type": "fixed", "rate": 5.0}, {"id": "w_sew_fleece", "name": "Шитьё флиса", "type": "fixed", "rate": 4.0}, {"id": "w_steam", "name": "Парка / ВТО", "type": "fixed", "rate": 3.0}, {"id": "w_sew_hat_fleece", "name": "Шитьё шапки с флисом", "type": "fixed", "rate": 13.0}, {"id": "w_sew_sweater", "name": "Шитьё (кофта/свитер)", "type": "fixed", "rate": 46.0}, {"id": "w_kettle", "name": "Кетлёвка", "type": "fixed", "rate": 70.0}, {"id": "w_percent", "name": "Процентовка", "type": "fixed", "rate": 0.8}, {"id": "w_pack_lbl", "name": "Упаковка с этикеткой", "type": "fixed", "rate": 5.0}, {"id": "w_pack_nolbl", "name": "Упаковка без этикетки", "type": "fixed", "rate": 3.0}, {"id": "w_hw_attach", "name": "Крепление фурнитуры", "type": "fixed", "rate": 0.0}], "materials": [{"id": "m_bag", "name": "Упаковочный пакет", "unit": "шт", "price": 1.5}, {"id": "m_sack", "name": "Упаковочный мешок", "unit": "шт", "price": 0.17}, {"id": "m_label", "name": "Этикетка", "unit": "шт", "price": 3.0}, {"id": "m_pin", "name": "Булавка", "unit": "шт", "price": 1.0}, {"id": "m_fleece", "name": "Флис (подклад)", "unit": "шт", "price": 0.0}, {"id": "m_hw", "name": "Фурнитура", "unit": "шт", "price": 0.0}, {"id": "m_rivets", "name": "Заклёпки", "unit": "шт", "price": 0.0}], "models": [{"id": "m1", "name": "«Мила» /1", "category": "Кофты / Свитера", "knitTime": 55.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": false, "sellPrice": 0, "yarns": [{"yarnId": "y_950", "weight": 0.45}], "works": [{"workId": "w_knitter3"}, {"workId": "w_murat"}, {"workId": "w_sew_turn"}, {"workId": "w_pack_lbl"}], "materials": []}, {"id": "m2", "name": "Кофта для Ивана", "category": "Кофты / Свитера", "knitTime": 35.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": false, "sellPrice": 0, "yarns": [{"yarnId": "y_570", "weight": 0.5}], "works": [{"workId": "w_knitter_fix", "customRate": 20.0}, {"workId": "w_sew_sweater", "customRate": 46.0}, {"workId": "w_kettle", "customRate": 80.0}, {"workId": "w_pack_lbl", "customRate": 50.0}], "materials": []}, {"id": "m3", "name": "Каролина", "category": "Кофты / Свитера", "knitTime": 0.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": false, "sellPrice": 0, "yarns": [{"yarnId": "y_1275", "weight": 0.85}], "works": [{"workId": "w_sew_sweater", "customRate": 70.0}, {"workId": "w_kettle", "customRate": 70.0}, {"workId": "w_pack_lbl", "customRate": 10.0}], "materials": []}, {"id": "m4", "name": "«Бини» (с отворотом)/1", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 85.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.135}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m5", "name": "«Бини» (с отворотом, детская)/2", "category": "Шапки и балаклавы", "knitTime": 4.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.12}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m6", "name": "«Бини» (без отворота)/3", "category": "Шапки и балаклавы", "knitTime": 6.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.118}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_noturn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m7", "name": "«Бини 5х5» /4", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.13}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m8", "name": "«Сардиния» /5", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.14}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m9", "name": "«Сардиния» (с отворотом) /6", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.14}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m10", "name": "«Джек» (с отворотом) /7", "category": "Шапки и балаклавы", "knitTime": 6.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.1}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m11", "name": "«Джек» (валик) /8", "category": "Шапки и балаклавы", "knitTime": 6.1, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.09}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_noturn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m12", "name": "«Монро» /9", "category": "Шапки и балаклавы", "knitTime": 6.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.12}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m13", "name": "«Карина» /10", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.13}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m14", "name": "«Карина» (рванка)/11", "category": "Шапки и балаклавы", "knitTime": 7.2, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.13}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m15", "name": "«Карина» (без рванки)/12", "category": "Шапки и балаклавы", "knitTime": 6.1, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.13}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m16", "name": "«Карина» (по голове)/13", "category": "Шапки и балаклавы", "knitTime": 6.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.11}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m17", "name": "«Микаса» /14", "category": "Шапки и балаклавы", "knitTime": 6.5, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.125}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m18", "name": "«Бини» (рванка)/15", "category": "Шапки и балаклавы", "knitTime": 6.3, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_std_usd", "weight": 0.13}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m19", "name": "\"Монро\"/16", "category": "Шапки и балаклавы", "knitTime": 6.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_750", "weight": 0.11}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m20", "name": "Балаклава для Аси/S", "category": "Шапки и балаклавы", "knitTime": 6.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_750", "weight": 0.1}], "works": [{"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m21", "name": "Балаклава для Аси/M", "category": "Шапки и балаклавы", "knitTime": 6.5, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_750", "weight": 0.11}], "works": [{"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}, {"id": "m22", "name": "Балаклава для Аси/L", "category": "Шапки и балаклавы", "knitTime": 7.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_750", "weight": 0.12}], "works": [{"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}]}, {"id": "m23", "name": "\"Эмиль\" (келебек)/16", "category": "Шапки и балаклавы", "knitTime": 6.0, "fxRate": 82.0, "defectPct": 3.0, "includeIndirect": true, "sellPrice": 0, "yarns": [{"yarnId": "y_980", "weight": 0.07}], "works": [{"workId": "w_murat"}, {"workId": "w_brigadier"}, {"workId": "w_top"}, {"workId": "w_sew_turn"}, {"workId": "w_steam"}, {"workId": "w_percent"}, {"workId": "w_pack_lbl"}], "materials": [{"matId": "m_bag", "qty": 1.0}, {"matId": "m_sack", "qty": 1.0}, {"matId": "m_label", "qty": 1.0}, {"matId": "m_pin", "qty": 1.0}]}]};
+
+let state = loadState();
+let currentTab = 'calc';
+let selectedModelId = state.models[0]?.id || null;
+let searchQuery = '';
+let catFilter = 'Все';
+let deferredPrompt = null;
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.models)) return parsed;
+    }
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+
+function saveState(msg) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  if (msg) showToast(msg);
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastT);
+  window._toastT = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function fmt(n) {
+  return (Number(n) || 0).toLocaleString('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmt0(n) {
+  return Math.round(Number(n) || 0).toLocaleString('ru-RU');
+}
+function uid(prefix) {
+  return prefix + '_' + Math.random().toString(36).slice(2, 8);
+}
+
+function getIndirectPerUnit() {
+  const vol = Math.max(1, Number(state.annualVolume) || 1);
+  const fixedSum = state.indirectFixed.reduce((s, i) => s + (Number(i.annual) || 0), 0);
+  const varSum = state.indirectVar.reduce((s, i) => s + (Number(i.annual) || 0), 0);
+  return {
+    fixedAnnual: fixedSum,
+    varAnnual: varSum,
+    fixedUnit: fixedSum / vol,
+    varUnit: varSum / vol,
+    totalUnit: (fixedSum + varSum) / vol
+  };
+}
+
+function calcModel(m) {
+  const fx = Number(m.fxRate) || Number(state.globalFx) || 82;
+  let yarnCost = 0;
+  let totalWeight = 0;
+  (m.yarns || []).forEach(yRow => {
+    const ref = state.yarns.find(y => y.id === yRow.yarnId);
+    const w = Number(yRow.weight) || 0;
+    totalWeight += w;
+    if (!ref) return;
+    const priceRub = ref.currency === 'USD' ? (Number(ref.price) || 0) * fx : (Number(ref.price) || 0);
+    yarnCost += w * priceRub;
+  });
+
+  const defectCost = yarnCost * ((Number(m.defectPct) || 0) / 100);
+
+  let worksCost = 0;
+  (m.works || []).forEach(wRow => {
+    const ref = state.works.find(w => w.id === wRow.workId);
+    if (!ref) return;
+    const rate = (wRow.customRate !== undefined && wRow.customRate !== '' && wRow.customRate !== null)
+      ? Number(wRow.customRate) : Number(ref.rate) || 0;
+    worksCost += ref.type === 'per_min' ? rate * (Number(m.knitTime) || 0) : rate;
+  });
+
+  let matsCost = 0;
+  (m.materials || []).forEach(mRow => {
+    const ref = state.materials.find(x => x.id === mRow.matId);
+    if (!ref) return;
+    matsCost += (Number(ref.price) || 0) * (Number(mRow.qty) || 0);
+  });
+
+  const direct = yarnCost + defectCost + worksCost + matsCost;
+  const ind = getIndirectPerUnit();
+  const indirectFixed = m.includeIndirect ? ind.fixedUnit : 0;
+  const indirectVar = m.includeIndirect ? ind.varUnit : 0;
+  const total = direct + indirectFixed + indirectVar;
+  const sell = Number(m.sellPrice) || 0;
+  const profit = sell > 0 ? sell - total : 0;
+  const marginPct = sell > 0 ? (profit / sell) * 100 : 0;
+
+  return { totalWeight, yarnCost, defectCost, worksCost, matsCost, direct, indirectFixed, indirectVar, total, sell, profit, marginPct };
+}
+
+function applyGlobalFx(val) {
+  const num = parseFloat(val);
+  if (!num || num <= 0) return;
+  state.globalFx = num;
+  state.models.forEach(m => { m.fxRate = num; });
+  saveState('Курс $ обновлён для всех моделей');
+  render();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+
+function render() {
+  document.getElementById('globalFxInput').value = state.globalFx;
+  const app = document.getElementById('app');
+  if (currentTab === 'calc') app.innerHTML = renderCalcTab();
+  else if (currentTab === 'refs') app.innerHTML = renderRefsTab();
+  else if (currentTab === 'indirect') app.innerHTML = renderIndirectTab();
+  else if (currentTab === 'summary') app.innerHTML = renderSummaryTab();
+}
+
+function renderCalcTab() {
+  const cats = ['Все', ...new Set(state.models.map(m => m.category || 'Без категории'))];
+  const filtered = state.models.filter(m => {
+    const okCat = catFilter === 'Все' || m.category === catFilter;
+    const okQ = !searchQuery || m.name.toLowerCase().includes(searchQuery.toLowerCase());
+    return okCat && okQ;
+  });
+
+  if (!selectedModelId || !state.models.some(m => m.id === selectedModelId)) {
+    selectedModelId = state.models[0]?.id || null;
+  }
+  const m = state.models.find(x => x.id === selectedModelId);
+  const c = m ? calcModel(m) : null;
+
+  const listHtml = filtered.map(item => {
+    const ic = calcModel(item);
+    return `
+      <div class="model-item ${item.id === selectedModelId ? 'active' : ''}" onclick="selectModel('${item.id}')">
+        <div>
+          <div class="model-name">${esc(item.name)}</div>
+          <div class="model-cat">${esc(item.category)} · ${(ic.totalWeight*1000).toFixed(0)} г · ${item.knitTime} мин</div>
+        </div>
+        <div class="model-price">${fmt(ic.total)} ₽</div>
+      </div>`;
+  }).join('') || '<div style="color:var(--muted);font-size:13px;padding:12px;">Ничего не найдено</div>';
+
+  let editorHtml = '<div class="card">Выберите или создайте модель</div>';
+  if (m && c) {
+    const pctYarn = c.total ? ((c.yarnCost + c.defectCost) / c.total * 100) : 0;
+    const pctWork = c.total ? (c.worksCost / c.total * 100) : 0;
+    const pctMat = c.total ? (c.matsCost / c.total * 100) : 0;
+    const pctInd = c.total ? ((c.indirectFixed + c.indirectVar) / c.total * 100) : 0;
+
+    const yarnRows = (m.yarns || []).map((yRow, idx) => {
+      const ref = state.yarns.find(y => y.id === yRow.yarnId);
+      const priceRub = ref ? (ref.currency === 'USD' ? ref.price * m.fxRate : ref.price) : 0;
+      const lineSum = (Number(yRow.weight) || 0) * priceRub;
+      const opts = state.yarns.map(y =>
+        `<option value="${y.id}" ${y.id === yRow.yarnId ? 'selected' : ''}>${esc(y.name)} (${y.price} ${y.currency === 'USD' ? '$' : '₽'}/кг)</option>`
+      ).join('');
+      return `
+        <div class="line-row">
+          <select onchange="updateModelYarn(${idx}, 'yarnId', this.value)">${opts}</select>
+          <input type="number" step="0.005" min="0" value="${yRow.weight}" onchange="updateModelYarn(${idx}, 'weight', this.value)" title="Вес, кг" />
+          <div class="sum-cell">${fmt(lineSum)} ₽</div>
+          <button class="btn btn-danger btn-sm" onclick="removeModelYarn(${idx})" title="Удалить">✕</button>
+        </div>`;
+    }).join('');
+
+    const workRows = (m.works || []).map((wRow, idx) => {
+      const ref = state.works.find(w => w.id === wRow.workId);
+      const baseRate = ref ? ref.rate : 0;
+      const effRate = (wRow.customRate !== undefined && wRow.customRate !== '' && wRow.customRate !== null) ? Number(wRow.customRate) : baseRate;
+      const lineSum = ref && ref.type === 'per_min' ? effRate * (Number(m.knitTime) || 0) : effRate;
+      const opts = state.works.map(w =>
+        `<option value="${w.id}" ${w.id === wRow.workId ? 'selected' : ''}>${esc(w.name)} (${w.rate} ${w.type === 'per_min' ? '₽/мин' : '₽'})</option>`
+      ).join('');
+      return `
+        <div class="line-row">
+          <select onchange="updateModelWork(${idx}, 'workId', this.value)">${opts}</select>
+          <input type="number" step="0.1" value="${effRate}" onchange="updateModelWork(${idx}, 'customRate', this.value)" title="Ставка (₽ или ₽/мин)" />
+          <div class="sum-cell">${fmt(lineSum)} ₽</div>
+          <button class="btn btn-danger btn-sm" onclick="removeModelWork(${idx})">✕</button>
+        </div>`;
+    }).join('');
+
+    const matRows = (m.materials || []).map((mRow, idx) => {
+      const ref = state.materials.find(x => x.id === mRow.matId);
+      const lineSum = (ref ? ref.price : 0) * (Number(mRow.qty) || 0);
+      const opts = state.materials.map(x =>
+        `<option value="${x.id}" ${x.id === mRow.matId ? 'selected' : ''}>${esc(x.name)} (${x.price} ₽/${esc(x.unit)})</option>`
+      ).join('');
+      return `
+        <div class="line-row">
+          <select onchange="updateModelMat(${idx}, 'matId', this.value)">${opts}</select>
+          <input type="number" step="0.1" min="0" value="${mRow.qty}" onchange="updateModelMat(${idx}, 'qty', this.value)" title="Кол-во" />
+          <div class="sum-cell">${fmt(lineSum)} ₽</div>
+          <button class="btn btn-danger btn-sm" onclick="removeModelMat(${idx})">✕</button>
+        </div>`;
+    }).join('');
+
+    editorHtml = `
+      <div class="kpi-grid">
+        <div class="kpi highlight">
+          <div class="kpi-label">Полная себестоимость</div>
+          <div class="kpi-val">${fmt(c.total)} ₽</div>
+          <div class="kpi-sub">Вес: ${(c.totalWeight*1000).toFixed(0)} г · ${m.knitTime} мин</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Прямые затраты</div>
+          <div class="kpi-val">${fmt(c.direct)} ₽</div>
+          <div class="kpi-sub">Пряжа+брак: ${fmt(c.yarnCost + c.defectCost)} ₽</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Косвенные цеха</div>
+          <div class="kpi-val">${fmt(c.indirectFixed + c.indirectVar)} ₽</div>
+          <div class="kpi-sub">${m.includeIndirect ? 'Включены в расчёт' : 'Отключены'}</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Прибыль при продаже</div>
+          <div class="kpi-val" style="color:${c.sell > 0 ? (c.profit >= 0 ? 'var(--success)' : 'var(--danger)') : 'var(--muted)'}">
+            ${c.sell > 0 ? fmt(c.profit) + ' ₽' : '—'}
+          </div>
+          <div class="kpi-sub">${c.sell > 0 ? 'Маржа: ' + c.marginPct.toFixed(1) + '%' : 'Укажите цену ниже'}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Параметры модели</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-soft btn-sm" onclick="duplicateModel('${m.id}')">📋 Дублировать</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteModel('${m.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field" style="grid-column: span 2;">
+            <label>Название модели</label>
+            <input value="${esc(m.name)}" onchange="updateModelField('name', this.value)" />
+          </div>
+          <div class="field">
+            <label>Категория</label>
+            <input value="${esc(m.category)}" onchange="updateModelField('category', this.value)" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Время вязания, мин</label>
+            <input type="number" step="0.1" min="0" value="${m.knitTime}" onchange="updateModelField('knitTime', parseFloat(this.value)||0)" />
+          </div>
+          <div class="field">
+            <label>Курс $, ₽</label>
+            <input type="number" step="0.5" min="1" value="${m.fxRate}" onchange="updateModelField('fxRate', parseFloat(this.value)||82)" />
+          </div>
+          <div class="field">
+            <label>Брак пряжи, %</label>
+            <input type="number" step="0.5" min="0" value="${m.defectPct}" onchange="updateModelField('defectPct', parseFloat(this.value)||0)" />
+          </div>
+          <div class="field">
+            <label>Цена продажи, ₽</label>
+            <input type="number" step="10" min="0" value="${m.sellPrice || ''}" placeholder="Например 650" onchange="updateModelField('sellPrice', parseFloat(this.value)||0)" />
+          </div>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          <input type="checkbox" ${m.includeIndirect ? 'checked' : ''} onchange="updateModelField('includeIndirect', this.checked)" />
+          Учитывать косвенные расходы цеха (+${fmt(getIndirectPerUnit().totalUnit)} ₽/шт при объёме ${fmt0(state.annualVolume)} шт/год)
+        </label>
+
+        <div class="bar-wrap">
+          <div class="bar-seg" style="width:${pctYarn}%;background:#2563eb;" title="Пряжа + брак"></div>
+          <div class="bar-seg" style="width:${pctWork}%;background:#10b981;" title="Работы"></div>
+          <div class="bar-seg" style="width:${pctMat}%;background:#f59e0b;" title="Материалы"></div>
+          <div class="bar-seg" style="width:${pctInd}%;background:#8b5cf6;" title="Косвенные"></div>
+        </div>
+        <div class="legend">
+          <span><i class="dot" style="background:#2563eb"></i>Пряжа+брак ${pctYarn.toFixed(0)}%</span>
+          <span><i class="dot" style="background:#10b981"></i>Работы ${pctWork.toFixed(0)}%</span>
+          <span><i class="dot" style="background:#f59e0b"></i>Материалы ${pctMat.toFixed(0)}%</span>
+          <span><i class="dot" style="background:#8b5cf6"></i>Косвенные ${pctInd.toFixed(0)}%</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>🧶 Пряжа (вес в кг) · ${fmt(c.yarnCost)} ₽ + брак ${fmt(c.defectCost)} ₽</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="addModelYarn()">+ Пряжа</button>
+            <button class="btn btn-soft btn-sm" onclick="toggleQuick('qaYarn')">⚡ Новая в базу</button>
+          </div>
+        </div>
+        ${yarnRows || '<div style="color:var(--muted);font-size:13px;">Добавьте пряжу</div>'}
+        <div id="qaYarn" class="quick-add">
+          <input id="qaYarnName" placeholder="Название пряжи" style="flex:1;min-width:140px;" />
+          <input id="qaYarnPrice" type="number" step="0.1" placeholder="Цена" style="width:90px;" />
+          <select id="qaYarnCur"><option value="USD">$/кг</option><option value="RUB">₽/кг</option></select>
+          <input id="qaYarnW" type="number" step="0.01" value="0.12" placeholder="Вес кг" style="width:85px;" />
+          <button class="btn btn-primary btn-sm" onclick="quickAddYarn()">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>🪡 Работы и операции · ${fmt(c.worksCost)} ₽</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="addModelWork()">+ Работа</button>
+            <button class="btn btn-soft btn-sm" onclick="toggleQuick('qaWork')">⚡ Новая в базу</button>
+          </div>
+        </div>
+        ${workRows || '<div style="color:var(--muted);font-size:13px;">Операции не выбраны</div>'}
+        <div id="qaWork" class="quick-add">
+          <input id="qaWorkName" placeholder="Название операции" style="flex:1;min-width:140px;" />
+          <input id="qaWorkRate" type="number" step="0.5" placeholder="Ставка ₽" style="width:95px;" />
+          <select id="qaWorkType"><option value="fixed">₽/шт</option><option value="per_min">₽/мин</option></select>
+          <button class="btn btn-primary btn-sm" onclick="quickAddWork()">Сохранить</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>📦 Материалы и фурнитура · ${fmt(c.matsCost)} ₽</span>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-sm" onclick="addModelMat()">+ Материал</button>
+            <button class="btn btn-soft btn-sm" onclick="toggleQuick('qaMat')">⚡ Новый в базу</button>
+          </div>
+        </div>
+        ${matRows || '<div style="color:var(--muted);font-size:13px;">Материалы не выбраны</div>'}
+        <div id="qaMat" class="quick-add">
+          <input id="qaMatName" placeholder="Название материала" style="flex:1;min-width:140px;" />
+          <input id="qaMatPrice" type="number" step="0.1" placeholder="Цена ₽" style="width:90px;" />
+          <input id="qaMatUnit" value="шт" placeholder="Ед." style="width:65px;" />
+          <button class="btn btn-primary btn-sm" onclick="quickAddMat()">Сохранить</button>
+        </div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="grid-calc">
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title">
+          <span>Модели (${state.models.length})</span>
+          <button class="btn btn-primary btn-sm" onclick="createNewModel()">+ Новая</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;">
+          <input placeholder="Поиск модели..." value="${esc(searchQuery)}" oninput="searchQuery=this.value;render()" style="flex:1;" />
+          <select onchange="catFilter=this.value;render()" style="max-width:120px;">
+            ${cats.map(ct => `<option ${ct===catFilter?'selected':''}>${esc(ct)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="model-list">${listHtml}</div>
+      </div>
+      <div>${editorHtml}</div>
+    </div>`;
+}
+
+function renderRefsTab() {
+  const yRows = state.yarns.map((y, i) => `
+    <tr>
+      <td><input value="${esc(y.name)}" onchange="state.yarns[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
+      <td><input type="number" step="0.1" value="${y.price}" onchange="state.yarns[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td>
+        <select onchange="state.yarns[${i}].currency=this.value;saveState();render()">
+          <option value="USD" ${y.currency==='USD'?'selected':''}>$/кг</option>
+          <option value="RUB" ${y.currency==='RUB'?'selected':''}>₽/кг</option>
+        </select>
+      </td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRef('yarns', ${i})">✕</button></td>
+    </tr>`).join('');
+
+  const wRows = state.works.map((w, i) => `
+    <tr>
+      <td><input value="${esc(w.name)}" onchange="state.works[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
+      <td><input type="number" step="0.1" value="${w.rate}" onchange="state.works[${i}].rate=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td>
+        <select onchange="state.works[${i}].type=this.value;saveState();render()">
+          <option value="fixed" ${w.type==='fixed'?'selected':''}>₽/шт</option>
+          <option value="per_min" ${w.type==='per_min'?'selected':''}>₽/мин</option>
+        </select>
+      </td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRef('works', ${i})">✕</button></td>
+    </tr>`).join('');
+
+  const mRows = state.materials.map((x, i) => `
+    <tr>
+      <td><input value="${esc(x.name)}" onchange="state.materials[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
+      <td><input type="number" step="0.05" value="${x.price}" onchange="state.materials[${i}].price=parseFloat(this.value)||0;saveState('Пересчитано');render()" style="width:95px;" /></td>
+      <td><input value="${esc(x.unit)}" onchange="state.materials[${i}].unit=this.value;saveState();render()" style="width:70px;" /></td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteRef('materials', ${i})">✕</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="card">
+      <div class="card-title">
+        <span>🧶 Справочник пряжи</span>
+        <button class="btn btn-primary btn-sm" onclick="state.yarns.push({id:uid('y'),name:'Новая пряжа',currency:'RUB',price:800});saveState();render()">+ Добавить</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Название</th><th>Цена</th><th>Валюта</th><th></th></tr></thead><tbody>${yRows}</tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>🪡 Справочник работ</span>
+        <button class="btn btn-primary btn-sm" onclick="state.works.push({id:uid('w'),name:'Новая операция',type:'fixed',rate:10});saveState();render()">+ Добавить</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Операция</th><th>Ставка</th><th>Тип</th><th></th></tr></thead><tbody>${wRows}</tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-title">
+        <span>📦 Справочник материалов и упаковки</span>
+        <button class="btn btn-primary btn-sm" onclick="state.materials.push({id:uid('mat'),name:'Новый материал',unit:'шт',price:5});saveState();render()">+ Добавить</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Материал</th><th>Цена ₽</th><th>Ед.</th><th></th></tr></thead><tbody>${mRows}</tbody></table></div>
+    </div>`;
+}
+
+function renderIndirectTab() {
+  const ind = getIndirectPerUnit();
+  const makeRows = (arr, key) => arr.map((item, i) => `
+    <tr>
+      <td><input value="${esc(item.name)}" onchange="state.${key}[${i}].name=this.value;saveState();render()" style="width:100%;" /></td>
+      <td><input type="number" step="1000" value="${item.annual}" onchange="state.${key}[${i}].annual=parseFloat(this.value)||0;saveState();render()" style="width:130px;" /></td>
+      <td class="num">${fmt(item.annual / Math.max(1, state.annualVolume))} ₽</td>
+      <td><button class="btn btn-danger btn-sm" onclick="state.${key}.splice(${i},1);saveState();render()">✕</button></td>
+    </tr>`).join('');
+
+  return `
+    <div class="kpi-grid">
+      <div class="kpi highlight">
+        <div class="kpi-label">Косвенные на 1 изделие</div>
+        <div class="kpi-val">${fmt(ind.totalUnit)} ₽</div>
+        <div class="kpi-sub">При плане ${fmt0(state.annualVolume)} шт/год</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Постоянные / год</div>
+        <div class="kpi-val">${fmt0(ind.fixedAnnual)} ₽</div>
+        <div class="kpi-sub">${fmt(ind.fixedUnit)} ₽ / шт</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Переменные / год</div>
+        <div class="kpi-val">${fmt0(ind.varAnnual)} ₽</div>
+        <div class="kpi-sub">${fmt(ind.varUnit)} ₽ / шт</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Всего накладных / год</div>
+        <div class="kpi-val">${fmt0(ind.fixedAnnual + ind.varAnnual)} ₽</div>
+        <div class="kpi-sub">База 2025 года</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>📈 Плановый объём выпуска (шт / год)</span></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <input type="range" min="10000" max="150000" step="1000" value="${state.annualVolume}" oninput="state.annualVolume=parseInt(this.value);saveState();render()" style="flex:1;min-width:200px;" />
+        <input type="number" step="1000" min="100" value="${state.annualVolume}" onchange="state.annualVolume=parseInt(this.value)||72022;saveState();render()" style="width:130px;font-weight:700;" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Косвенно-постоянные расходы (₽/год)</span>
+        <button class="btn btn-sm" onclick="state.indirectFixed.push({id:uid('if'),name:'Новая статья',annual:0});saveState();render()">+ Статья</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Статья</th><th>Сумма в год, ₽</th><th class="num">На 1 шт</th><th></th></tr></thead><tbody>${makeRows(state.indirectFixed, 'indirectFixed')}</tbody></table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>Косвенно-переменные расходы (₽/год)</span>
+        <button class="btn btn-sm" onclick="state.indirectVar.push({id:uid('iv'),name:'Новая статья',annual:0});saveState();render()">+ Статья</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>Статья</th><th>Сумма в год, ₽</th><th class="num">На 1 шт</th><th></th></tr></thead><tbody>${makeRows(state.indirectVar, 'indirectVar')}</tbody></table></div>
+    </div>`;
+}
+
+function renderSummaryTab() {
+  const rowsHtml = state.models.map(m => {
+    const c = calcModel(m);
+    return `
+      <tr style="cursor:pointer;" onclick="selectedModelId='${m.id}';switchTab('calc')">
+        <td><b>${esc(m.name)}</b><div style="font-size:11.5px;color:var(--muted);">${esc(m.category)}</div></td>
+        <td class="num">${(c.totalWeight*1000).toFixed(0)} г</td>
+        <td class="num">${fmt(c.yarnCost + c.defectCost)} ₽</td>
+        <td class="num">${fmt(c.worksCost)} ₽</td>
+        <td class="num">${fmt(c.matsCost)} ₽</td>
+        <td class="num">${fmt(c.direct)} ₽</td>
+        <td class="num">${fmt(c.indirectFixed + c.indirectVar)} ₽</td>
+        <td class="num"><b>${fmt(c.total)} ₽</b></td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div class="card">
+      <div class="card-title">
+        <span>📊 Сводная таблица себестоимости (${state.models.length} моделей)</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="exportCSV()">📥 Экспорт CSV (Excel)</button>
+          <button class="btn btn-sm" onclick="exportJSON()">💾 Скачать базу JSON</button>
+          <label class="btn btn-sm" style="cursor:pointer;">
+            📂 Загрузить JSON
+            <input type="file" accept=".json" style="display:none;" onchange="importJSON(this)" />
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Модель</th><th class="num">Вес</th><th class="num">Пряжа+брак</th>
+              <th class="num">Работы</th><th class="num">Материалы</th><th class="num">Прямые</th>
+              <th class="num">Косвенные</th><th class="num">Итого</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span>🔒 Защита PIN-кодом и сброс данных</span></div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <input id="newPinInput" type="password" inputmode="numeric" placeholder="Задайте PIN (пусто = без PIN)" value="${esc(state.pinCode || '')}" style="width:230px;" />
+        <button class="btn btn-soft btn-sm" onclick="savePin()">Сохранить PIN</button>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="resetAll()">↺ Сбросить к таблице 2025</button>
+      </div>
+    </div>`;
+}
+
+// Model actions
+function selectModel(id) { selectedModelId = id; render(); }
+function currentModel() { return state.models.find(m => m.id === selectedModelId); }
+function updateModelField(field, val) {
+  const m = currentModel(); if (!m) return;
+  m[field] = val; saveState(); render();
+}
+function addModelYarn() {
+  const m = currentModel(); if (!m || !state.yarns.length) return;
+  m.yarns.push({ yarnId: state.yarns[0].id, weight: 0.1 }); saveState(); render();
+}
+function updateModelYarn(idx, field, val) {
+  const m = currentModel(); if (!m) return;
+  m.yarns[idx][field] = field === 'weight' ? (parseFloat(val) || 0) : val; saveState(); render();
+}
+function removeModelYarn(idx) {
+  const m = currentModel(); if (!m) return;
+  m.yarns.splice(idx, 1); saveState(); render();
+}
+function addModelWork() {
+  const m = currentModel(); if (!m || !state.works.length) return;
+  m.works.push({ workId: state.works[0].id }); saveState(); render();
+}
+function updateModelWork(idx, field, val) {
+  const m = currentModel(); if (!m) return;
+  if (field === 'workId') { m.works[idx].workId = val; delete m.works[idx].customRate; }
+  else { m.works[idx].customRate = parseFloat(val) || 0; }
+  saveState(); render();
+}
+function removeModelWork(idx) {
+  const m = currentModel(); if (!m) return;
+  m.works.splice(idx, 1); saveState(); render();
+}
+function addModelMat() {
+  const m = currentModel(); if (!m || !state.materials.length) return;
+  m.materials.push({ matId: state.materials[0].id, qty: 1 }); saveState(); render();
+}
+function updateModelMat(idx, field, val) {
+  const m = currentModel(); if (!m) return;
+  m.materials[idx][field] = field === 'qty' ? (parseFloat(val) || 0) : val; saveState(); render();
+}
+function removeModelMat(idx) {
+  const m = currentModel(); if (!m) return;
+  m.materials.splice(idx, 1); saveState(); render();
+}
+
+function toggleQuick(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('open');
+}
+function quickAddYarn() {
+  const name = document.getElementById('qaYarnName').value.trim();
+  const price = parseFloat(document.getElementById('qaYarnPrice').value) || 0;
+  const currency = document.getElementById('qaYarnCur').value;
+  const weight = parseFloat(document.getElementById('qaYarnW').value) || 0.1;
+  if (!name) return;
+  const id = uid('y');
+  state.yarns.push({ id, name, currency, price });
+  currentModel().yarns.push({ yarnId: id, weight });
+  saveState('Пряжа добавлена в базу и модель'); render();
+}
+function quickAddWork() {
+  const name = document.getElementById('qaWorkName').value.trim();
+  const rate = parseFloat(document.getElementById('qaWorkRate').value) || 0;
+  const type = document.getElementById('qaWorkType').value;
+  if (!name) return;
+  const id = uid('w');
+  state.works.push({ id, name, type, rate });
+  currentModel().works.push({ workId: id });
+  saveState('Операция добавлена в базу и модель'); render();
+}
+function quickAddMat() {
+  const name = document.getElementById('qaMatName').value.trim();
+  const price = parseFloat(document.getElementById('qaMatPrice').value) || 0;
+  const unit = document.getElementById('qaMatUnit').value.trim() || 'шт';
+  if (!name) return;
+  const id = uid('mat');
+  state.materials.push({ id, name, unit, price });
+  currentModel().materials.push({ matId: id, qty: 1 });
+  saveState('Материал добавлен в базу и модель'); render();
+}
+
+function createNewModel() {
+  const id = uid('m');
+  state.models.unshift({
+    id, name: 'Новая модель', category: 'Шапки и балаклавы',
+    knitTime: 6.5, fxRate: state.globalFx, defectPct: 3.0, includeIndirect: true, sellPrice: 0,
+    yarns: state.yarns[0] ? [{ yarnId: state.yarns[0].id, weight: 0.12 }] : [],
+    works: [], materials: []
+  });
+  selectedModelId = id;
+  saveState('Создана новая модель'); render();
+}
+function duplicateModel(id) {
+  const orig = state.models.find(x => x.id === id); if (!orig) return;
+  const copy = JSON.parse(JSON.stringify(orig));
+  copy.id = uid('m'); copy.name = orig.name + ' (копия)';
+  state.models.unshift(copy); selectedModelId = copy.id;
+  saveState('Модель продублирована'); render();
+}
+function deleteModel(id) {
+  if (!confirm('Удалить эту модель?')) return;
+  state.models = state.models.filter(x => x.id !== id);
+  selectedModelId = state.models[0]?.id || null;
+  saveState('Модель удалена'); render();
+}
+function deleteRef(key, idx) {
+  if (!confirm('Удалить элемент из справочника?')) return;
+  state[key].splice(idx, 1); saveState(); render();
+}
+
+// Export / Import / PIN
+function exportCSV() {
+  const header = ['Модель', 'Категория', 'Вес (кг)', 'Время (мин)', 'Пряжа+брак', 'Работы', 'Материалы', 'Прямые', 'Косвенные', 'Итого себестоимость'];
+  const lines = [header.join(';')];
+  state.models.forEach(m => {
+    const c = calcModel(m);
+    lines.push([
+      '"' + m.name.replace(/"/g, '""') + '"',
+      '"' + (m.category || '').replace(/"/g, '""') + '"',
+      c.totalWeight.toFixed(3).replace('.', ','),
+      String(m.knitTime).replace('.', ','),
+      (c.yarnCost + c.defectCost).toFixed(2).replace('.', ','),
+      c.worksCost.toFixed(2).replace('.', ','),
+      c.matsCost.toFixed(2).replace('.', ','),
+      c.direct.toFixed(2).replace('.', ','),
+      (c.indirectFixed + c.indirectVar).toFixed(2).replace('.', ','),
+      c.total.toFixed(2).replace('.', ',')
+    ].join(';'));
+  });
+  downloadBlob('\uFEFF' + lines.join('\n'), 'sebestoimost_2025.csv', 'text/csv;charset=utf-8');
+}
+function exportJSON() {
+  downloadBlob(JSON.stringify(state, null, 2), 'knitting_cost_backup.json', 'application/json');
+}
+function importJSON(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      if (!parsed.models) throw new Error('Неверный формат');
+      state = parsed; selectedModelId = state.models[0]?.id || null;
+      saveState('База успешно загружена'); render();
+    } catch (e) { alert('Ошибка чтения JSON: ' + e.message); }
+  };
+  reader.readAsText(file);
+}
+function downloadBlob(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], { type }));
+  a.download = filename; a.click();
+}
+function savePin() {
+  state.pinCode = document.getElementById('newPinInput').value.trim();
+  saveState(state.pinCode ? 'PIN-код сохранён' : 'PIN-код отключён');
+}
+function checkPin() {
+  const val = document.getElementById('pinInput').value.trim();
+  if (val === state.pinCode) {
+    document.getElementById('pinOverlay').classList.remove('open');
+    sessionStorage.setItem('pin_ok', '1');
+  } else {
+    document.getElementById('pinErr').textContent = 'Неверный PIN-код';
+  }
+}
+function resetAll() {
+  if (!confirm('Сбросить все изменения и вернуть исходную таблицу 2025 года?')) return;
+  state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+  selectedModelId = state.models[0]?.id || null;
+  saveState('Данные сброшены к базе 2025'); render();
+}
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// PWA registration & install prompt
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  });
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBtn').style.display = 'inline-flex';
+});
+function installPWA() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => {
+    deferredPrompt = null;
+    document.getElementById('installBtn').style.display = 'none';
+  });
+}
+
+// Init
+if (state.pinCode && !sessionStorage.getItem('pin_ok')) {
+  document.getElementById('pinOverlay').classList.add('open');
+}
+render();
+</script>
+</body>
+</html>
